@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { BasicEvent } from '../components/BasicEvent';
+
+import { searchWikipedia } from '../utils/wikiAPI';
+
 const x = 5;
 function getSpan(zoomLevel: number,): [number, number] {
   if (zoomLevel >= 1 && zoomLevel <= x) return [10000, 1000];
@@ -15,6 +18,11 @@ function getSpan(zoomLevel: number,): [number, number] {
   // if (zoomLevel >= 7 && zoomLevel <= 9) return [1000, 100];
   return [10000, 1000]; // fallback for other values
 }
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+]
 // function getSpan(zoomLevel: number): [number, number] {
 //   const baseSpan = 10000;
 //   const baseIncrement = 1000;
@@ -27,13 +35,21 @@ function getSpan(zoomLevel: number,): [number, number] {
 const testData = [
   { title: 'Event 1', startYear: -3000, endYear: -2500 },
   { title: 'Event 2', startYear: -2500, endYear: -1000 },
-  { title: 'Event 3', startYear: 0, endYear: 500 }
+  { title: 'Event 3', startYear: 0, endYear: 500 },
+  { title: 'Event 4', startYear: -1500, endYear: 1600 }
 ] 
 
-const renderEvents = (events: { title: string; startYear: number; endYear: number }[], width: number, span: number, centerYear: number, height: number): React.ReactNode[] =>  {
+const renderEvents = (
+  events: { title: string; startYear: number; endYear: number }[], 
+  width: number, 
+  baseSpan: number, 
+  increment: number,
+  localZoomLevel: number, 
+  centerYear: number): React.ReactNode[] =>  {
+    // console.log("rendering events")
   return events.map((event, index) => {
-    const eventStartX = ((event.startYear - (centerYear - span / 2)) / span) * width;
-    const eventEndX = ((event.endYear - (centerYear - span / 2)) / span) * width;
+    const eventStartX = getXFromYear(event.startYear, width, baseSpan, increment, localZoomLevel, centerYear);
+    const eventEndX = getXFromYear(event.endYear, width, baseSpan, increment, localZoomLevel, centerYear);
     const eventWidth = eventEndX - eventStartX;
     return (
       <BasicEvent
@@ -67,6 +83,12 @@ export const Timeline: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => { 
+    searchWikipedia("World War I").then(results => {
+      console.log("Wiki Search Results:", results);
+    });
+  }, []);
+
   const [mouseX, setMouseX] = useState<number>(0);
   const localZoomLevel = ((Math.ceil(zoomLevel) - 1) % x) + 1;
   const [zoomMouseX, setZoomMouseX] = useState<number>(0);
@@ -96,14 +118,16 @@ export const Timeline: React.FC = () => {
       const centerYear = 0;
       const span = baseSpan - ((localZoomLevel - 1) * increment)
       const ticks: React.ReactNode[] = [];
-      console.log({ span, baseSpan, increment, localZoomLevel, centerYear });
+      console.log({ width, span, baseSpan, increment, localZoomLevel, centerYear });
+      const incrementSize = width / span;
+      const spanDiff = baseSpan - span;
+      console.log({incrementSize, spanDiff});
       for (let count = 0; count <= baseSpan; count += increment) {
         const year = centerYear - baseSpan / 2 + count;
         const level = 0;
-        const x = count * (width / span) - ((baseSpan - span) * (width / span)) / 2;
+        const x = count * incrementSize - (spanDiff * incrementSize) / 2;
         // Only push ticks if x is within the visible range
         if (x > 0 && x < width + 20) {
-          console.log({ year, x, count });
           ticks.push(
             <g key={x + '-' + year}>
               <line
@@ -131,8 +155,33 @@ export const Timeline: React.FC = () => {
           );
         }
         // render level 2 ticks 
-
-
+        const tickCount = increment === 1 ? 12 : 5;
+        const spacing = increment === 1 ? increment / 12 : increment / 5;
+        for (let subCount = 0; subCount < tickCount; subCount++) {
+          ticks.push(
+            <g key={x + '-sub-' + subCount}>
+              <line 
+                x1={x + (subCount) * (spacing) * (width / span)}
+                y1={55}
+                x2={x + (subCount) * (spacing) * (width / span)}
+                y2={45}
+                stroke="#999"
+                strokeWidth={1}
+              />
+              {increment === 1 && (
+                <text 
+                  x={x + (subCount) * (spacing) * (width / span)}
+                  y={40}
+                  fontSize={5}
+                  textAnchor="middle"
+                  fill="#999"
+                >
+                  {MONTHS[subCount]}
+                </text>
+              )}
+            </g>
+          )
+        }
         // If spacing is large enough, add subdivision ticks
         //   if (spacing > subdivisionThreshold && yearsStep > 1) {
         //     const subYearsStep = yearsStep / 2;
@@ -185,7 +234,7 @@ export const Timeline: React.FC = () => {
         setMouseX(e.clientX - rect.left);
       }}
     >
-      {renderEvents(testData, width, baseSpan - ((zoomLevel - 1) * increment), 0, height)}
+      {renderEvents(testData, width, baseSpan, increment, localZoomLevel, 0)}
       <div
         style={{ minWidth: '100vw'  }}
         ref={containerRef}
@@ -203,7 +252,7 @@ export const Timeline: React.FC = () => {
       </div>
     </div>
       <div>
-        Year: {getYearFromMouseX(mouseX, width, baseSpan - ((zoomLevel - 1) * increment), 0).toFixed(2)}
+        Year: {getYearFromX(mouseX, width, baseSpan, increment, localZoomLevel, 0).toFixed(0)}
         <div>TIMELINE (zoomLevel: {zoomLevel.toFixed(2)})</div>
         <div>(local zoomLevel: {localZoomLevel.toFixed(2)})</div>
       </div>
@@ -211,7 +260,18 @@ export const Timeline: React.FC = () => {
   );
 };
 
-const getYearFromMouseX = (mouseX: number, width: number, span: number, centerYear: number): number => {
-  const year = centerYear - span / 2 + (mouseX / width) * span;
+
+// these are both broken and incorrect
+const getXFromYear = (year: number, width: number, baseSpan: number, increment: number, localZoomLevel: number, centerYear: number): number => {
+  const span = baseSpan - ((localZoomLevel - 1) * (baseSpan / increment));
+  const spanDiff = baseSpan - span;
+  const x = ((year - (centerYear - baseSpan / 2)) * width / span) + (spanDiff * width / (2 * span));
+  return x;
+}
+
+const getYearFromX = (mouseX: number, width: number, baseSpan: number, increment: number, localZoomLevel: number, centerYear: number): number => {
+  const span = baseSpan - ((localZoomLevel - 1) * (baseSpan / increment));
+  const spanDiff = baseSpan - span;
+  const year = centerYear - baseSpan / 2 + (mouseX * span / width) + (spanDiff / 2);
   return year;
 };
