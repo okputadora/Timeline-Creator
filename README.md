@@ -1,73 +1,93 @@
-# React + TypeScript + Vite
+# Timeline Creator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Timeline Creator is a React + Vite application for exploring historical events on an interactive timeline. It lets users pan across eras, zoom in on specific periods, and view major events in a visual, time-based layout.
 
-Currently, two official plugins are available:
+The project is designed as a flexible foundation for building historical, biographical, or event-driven storytelling interfaces. It includes sample data for a wide range of periods and has hooks for pulling structured event metadata from Wikimedia sources.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## React Compiler
+- Interactive timeline visualization with zoom and pan controls
+- Mouse-wheel zoom centered on the cursor position
+- Drag-to-pan navigation across time
+- Animated timeline transitions for presentation/demo purposes
+- Built-in sample historical dataset spanning ancient, medieval, and modern history
+- Planned/experimental Wikipedia and Wikidata API integration for enrichment and event lookup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- React 19
+- TypeScript
+- Vite
+- Axios
+- Wikimedia APIs (Wikipedia / Wikidata)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Project Goals
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+This project aims to make historical timelines easier to explore and present visually. It can serve as:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- a research tool for comparing periods and events
+- a presentation UI for educational content
+- a starting point for a larger historical knowledge app
+- a testbed for timeline rendering and event data aggregation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18 or newer
+- npm
+
+### Install dependencies
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Start the development server
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+This will launch the app in Vite’s local development environment, typically at a local URL such as http://localhost:5173.
+
+### Build for production
+
+```bash
+npm run build
+```
+
+### Preview the production build
+
+```bash
+npm run preview
+```
+
+## Project Structure
+
+```text
+timeline-creator/
+├── public/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── utils/
+│   ├── App.tsx
+│   ├── App.css
+│   ├── index.css
+│   └── main.tsx
+├── index.html
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── eslint.config.js
+└── README.md
+```
+
+## Notes
+
+This project is still evolving and includes experimental integration work with Wikimedia data sources. The timeline itself is already functional with sample data, while the API-driven event lookup can be expanded or refined as the app matures.
+
+## License
+
+This project does not currently declare a license. If you plan to publish or distribute it, add an appropriate open-source license before doing so.
